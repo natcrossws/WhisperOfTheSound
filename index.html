@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Whisper of the Sound</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main id="app">
+    <div id="canvas-host"></div>
+    <aside id="controls" aria-label="Parámetros">
+      <h1>Whisper of the Sound</h1>
+      <p class="hint">
+        Instalación generativa: el micrófono alimenta texturas que acumulan memoria y se disuelven en el silencio.
+      </p>
+      <button type="button" id="btn-audio" class="primary">
+        Activar micrófono y audio
+      </button>
+      <p id="audio-status" class="status" role="status"></p>
+
+      <fieldset>
+        <legend>Memoria y disolución</legend>
+        <label>
+          Persistencia (trazo)
+          <input type="range" id="sl-persistence" min="0.02" max="0.35" step="0.01" value="0.12" />
+          <span class="val" data-for="sl-persistence"></span>
+        </label>
+        <label>
+          Velocidad de borrado en silencio
+          <input type="range" id="sl-silence-dissolve" min="0.05" max="0.6" step="0.01" value="0.22" />
+          <span class="val" data-for="sl-silence-dissolve"></span>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Respuesta al sonido</legend>
+        <label>
+          Ganancia de entrada
+          <input type="range" id="sl-input-gain" min="0.5" max="4" step="0.1" value="1.6" />
+          <span class="val" data-for="sl-input-gain"></span>
+        </label>
+        <label>
+          Peso graves → peso denso
+          <input type="range" id="sl-low-weight" min="0" max="2" step="0.05" value="1" />
+          <span class="val" data-for="sl-low-weight"></span>
+        </label>
+        <label>
+          Peso medios → flujo
+          <input type="range" id="sl-mid-weight" min="0" max="2" step="0.05" value="1" />
+          <span class="val" data-for="sl-mid-weight"></span>
+        </label>
+        <label>
+          Peso agudos → ligereza
+          <input type="range" id="sl-high-weight" min="0" max="2" step="0.05" value="1" />
+          <span class="val" data-for="sl-high-weight"></span>
+        </label>
+        <label>
+          Ritmo / picos → pulsos
+          <input type="range" id="sl-pulse-weight" min="0" max="2" step="0.05" value="1" />
+          <span class="val" data-for="sl-pulse-weight"></span>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Pintura generativa</legend>
+        <p class="hint" style="margin-top:0">
+          Cada ataque o nota añade formas al lienzo; se acumulan y solo se disuelven con lentitud (más al callar).
+          Se filtra ruido de fondo con planitud espectral y nivel por encima del ambiente.
+        </p>
+        <label>
+          Umbral nuevas capas (nota / ataque)
+          <input type="range" id="sl-paint-threshold" min="0.2" max="0.55" step="0.01" value="0.38" />
+          <span class="val" data-for="sl-paint-threshold"></span>
+        </label>
+        <label>
+          Pausa mínima entre capas (ms)
+          <input type="range" id="sl-paint-cooldown" min="80" max="400" step="10" value="175" />
+          <span class="val" data-for="sl-paint-cooldown"></span>
+        </label>
+        <label>
+          Ruido: planitud máxima (más bajo = más estricto)
+          <input type="range" id="sl-paint-flatness-max" min="0.28" max="0.52" step="0.01" value="0.41" />
+          <span class="val" data-for="sl-paint-flatness-max"></span>
+        </label>
+        <label>
+          Señal clara mínima (por encima del fondo)
+          <input type="range" id="sl-paint-rms-excess-min" min="0.03" max="0.2" step="0.005" value="0.075" />
+          <span class="val" data-for="sl-paint-rms-excess-min"></span>
+        </label>
+        <label>
+          Cuerpo tonal mín. (graves/medios)
+          <input type="range" id="sl-paint-band-body-min" min="0.025" max="0.14" step="0.005" value="0.048" />
+          <span class="val" data-for="sl-paint-band-body-min"></span>
+        </label>
+        <label>
+          Borrado del lienzo mientras suena (más = más rápido)
+          <input type="range" id="sl-paint-fade-sound" min="0" max="7" step="0.2" value="1.2" />
+          <span class="val" data-for="sl-paint-fade-sound"></span>
+        </label>
+        <label>
+          Borrado extra en silencio (multiplicador)
+          <input type="range" id="sl-paint-fade-silence-mult" min="8" max="48" step="1" value="26" />
+          <span class="val" data-for="sl-paint-fade-silence-mult"></span>
+        </label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Campo orgánico</legend>
+        <label>
+          Escala del ruido
+          <input type="range" id="sl-noise-scale" min="0.0004" max="0.006" step="0.0001" value="0.0018" />
+          <span class="val" data-for="sl-noise-scale"></span>
+        </label>
+        <label>
+          Turbulencia base
+          <input type="range" id="sl-turbulence" min="0.3" max="2.2" step="0.05" value="1" />
+          <span class="val" data-for="sl-turbulence"></span>
+        </label>
+        <label>
+          Densidad de partículas
+          <input type="range" id="sl-density" min="600" max="3200" step="100" value="1800" />
+          <span class="val" data-for="sl-density"></span>
+        </label>
+      </fieldset>
+    </aside>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.3/lib/p5.min.js"></script>
+  <script src="js/audioAnalyzer.js"></script>
+  <script src="js/mapping.js"></script>
+  <script src="js/generativePainting.js"></script>
+  <script src="js/visualEngine.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
